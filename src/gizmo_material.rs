@@ -6,19 +6,20 @@ use bevy::{
     render::{
         render_asset::{PrepareAssetError, RenderAsset},
         render_resource::{
-            std140::{AsStd140, Std140},
-            BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
+           // std140::{AsStd140, Std140},
+            BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, ShaderRef, ShaderType,
             BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, Buffer,
-            BufferBindingType, BufferInitDescriptor, BufferSize, BufferUsages, ShaderStages,
+            BufferBindingType, BufferInitDescriptor, BufferSize, BufferUsages, ShaderStages, AsBindGroup,
         },
         renderer::RenderDevice,
     },
 };
+use encase;
 
 pub const GIZMO_SHADER_HANDLE: HandleUntyped =
     HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 13953800272683943019);
 
-#[derive(Debug, Clone, Default, TypeUuid)]
+#[derive(Debug, Clone, Default, TypeUuid, AsBindGroup)]
 #[uuid = "0cf245a7-ce7a-4473-821c-111e6f359193"]
 pub struct GizmoMaterial {
     pub color: Color,
@@ -29,7 +30,7 @@ impl From<Color> for GizmoMaterial {
     }
 }
 
-#[derive(Clone, Default, AsStd140)]
+#[derive(Clone, Default, ShaderType)]
 pub struct GizmoMaterialUniformData {
     pub color: Vec4,
 }
@@ -55,10 +56,10 @@ impl RenderAsset for GizmoMaterial {
         let value = GizmoMaterialUniformData {
             color: material.color.as_linear_rgba_f32().into(),
         };
-        let value_std140 = value.as_std140();
+       // let value_std140 = value.as_std140();
 
         let buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
-            contents: value_std140.as_bytes(),
+            contents: &[0], //value_std140.as_bytes(),
             label: None,
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
         });
@@ -79,35 +80,35 @@ impl RenderAsset for GizmoMaterial {
 }
 
 impl Material for GizmoMaterial {
-    fn fragment_shader(_asset_server: &AssetServer) -> Option<Handle<Shader>> {
-        Some(GIZMO_SHADER_HANDLE.typed())
+    fn fragment_shader() -> ShaderRef {
+        ShaderRef::Handle(GIZMO_SHADER_HANDLE.typed())
     }
 
-    fn vertex_shader(_asset_server: &AssetServer) -> Option<Handle<Shader>> {
-        Some(GIZMO_SHADER_HANDLE.typed())
+    fn vertex_shader() -> ShaderRef {
+        ShaderRef::Handle(GIZMO_SHADER_HANDLE.typed())
     }
 
-    fn alpha_mode(_material: &<Self as RenderAsset>::PreparedAsset) -> AlphaMode {
+    fn alpha_mode(&self) -> AlphaMode {
         AlphaMode::Blend
     }
 
-    fn bind_group(render_asset: &<Self as RenderAsset>::PreparedAsset) -> &BindGroup {
-        &render_asset.bind_group
-    }
+    // fn bind_group(render_asset: &<Self as RenderAsset>::PreparedAsset) -> &BindGroup {
+    //     &render_asset.bind_group
+    // }
 
-    fn bind_group_layout(render_device: &RenderDevice) -> BindGroupLayout {
-        render_device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-            entries: &[BindGroupLayoutEntry {
-                binding: 0,
-                visibility: ShaderStages::FRAGMENT,
-                ty: BindingType::Buffer {
-                    ty: BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: BufferSize::new(Vec4::std140_size_static() as u64),
-                },
-                count: None,
-            }],
-            label: None,
-        })
-    }
+    // fn bind_group_layout(render_device: &RenderDevice) -> BindGroupLayout {
+    //     render_device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+    //         entries: &[BindGroupLayoutEntry {
+    //             binding: 0,
+    //             visibility: ShaderStages::FRAGMENT,
+    //             ty: BindingType::Buffer {
+    //                 ty: BufferBindingType::Uniform,
+    //                 has_dynamic_offset: false,
+    //                 min_binding_size: BufferSize::new(Vec4::std140_size_static() as u64),
+    //             },
+    //             count: None,
+    //         }],
+    //         label: None,
+    //     })
+    // }
 }

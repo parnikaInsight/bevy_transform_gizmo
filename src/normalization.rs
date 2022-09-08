@@ -53,15 +53,15 @@ pub fn normalize(
     let view = camera_position.compute_matrix().inverse();
 
     for (mut transform, mut global_transform, normalize) in query.p1().iter_mut() {
-        let distance = view.transform_point3(global_transform.translation).z;
-
-        let pixel_end = if let Some(coords) = Camera::world_to_screen(
+        let distance = view.transform_point3(global_transform.translation()).z;
+        let (s, r, t) = global_transform.to_scale_rotation_translation();
+        let pixel_end = if let Some(coords) = Camera::world_to_viewport(
             &camera,
-            &windows,
-            &images,
+            // &windows,
+            // &images,
             &GlobalTransform::default(),
             Vec3::new(
-                normalize.size_in_world * global_transform.scale.x,
+                normalize.size_in_world * s.x,
                 0.0,
                 distance,
             ),
@@ -70,10 +70,10 @@ pub fn normalize(
         } else {
             break;
         };
-        let pixel_root = if let Some(coords) = Camera::world_to_screen(
+        let pixel_root = if let Some(coords) = Camera::world_to_viewport(
             &camera,
-            &windows,
-            &images,
+            // &windows,
+            // &images,
             &GlobalTransform::default(),
             Vec3::new(0.0, 0.0, distance),
         ) {
@@ -83,7 +83,9 @@ pub fn normalize(
         };
         let actual_pixel_size = pixel_root.distance(pixel_end);
         let required_scale = normalize.desired_pixel_size / actual_pixel_size;
-        global_transform.scale *= Vec3::splat(required_scale);
-        transform.scale = global_transform.scale;
+        let (s, r, t) = global_transform.to_scale_rotation_translation();
+        let new_scale = s * Vec3::splat(required_scale);
+        //global_transform.scale *= Vec3::splat(required_scale);
+        transform.scale = new_scale;
     }
 }

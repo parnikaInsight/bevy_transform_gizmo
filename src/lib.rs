@@ -214,7 +214,7 @@ fn drag_gizmo(
     let gizmo_origin = match gizmo.origin_drag_start {
         Some(origin) => origin,
         None => {
-            let origin = gizmo_transform.translation;
+            let origin = gizmo_transform.translation();
             gizmo.origin_drag_start = Some(origin);
             origin
         }
@@ -258,10 +258,11 @@ fn drag_gizmo(
                     .iter_mut()
                     .filter(|(s, _t, _i)| s.selected())
                     .for_each(|(_s, mut t, i)| {
+                        let (s, r, tr) = i.transform.to_scale_rotation_translation();
                         *t = Transform {
-                            translation: i.transform.translation + translation,
-                            rotation: i.transform.rotation,
-                            scale: i.transform.scale,
+                            translation: tr + translation, //i.transform.translation() + translation,
+                            rotation: r, //i.transform.rotation,
+                            scale: s, //i.transform.scale,
                         }
                     });
             }
@@ -295,10 +296,11 @@ fn drag_gizmo(
                     .iter_mut()
                     .filter(|(s, _t, _i)| s.selected())
                     .for_each(|(_s, mut t, i)| {
+                        let (s, r, tr) = i.transform.to_scale_rotation_translation();
                         *t = Transform {
-                            translation: i.transform.translation,
-                            rotation: rotation * i.transform.rotation,
-                            scale: i.transform.scale,
+                            translation: tr, //i.transform.translation() + translation,
+                            rotation: rotation * r, //i.transform.rotation,
+                            scale: s, //i.transform.scale,
                         }
                     });
             }
@@ -399,17 +401,17 @@ fn place_gizmo(
         .p0()
         .iter()
         .filter(|(s, _t)| s.selected())
-        .map(|(_s, t)| t.translation)
+        .map(|(_s, t)| t.translation())
         .collect();
     let n_selected = selected.len();
     let transform_sum = selected.iter().fold(Vec3::ZERO, |acc, t| acc + *t);
     let centroid = transform_sum / n_selected as f32;
     // Set the gizmo's position and visibility
     if let Ok((mut g_transform, mut transform, mut visible)) = queries.p1().get_single_mut() {
-        g_transform.translation = centroid;
-        g_transform.rotation = plugin_settings.alignment_rotation;
-        transform.translation = g_transform.translation;
-        transform.rotation = g_transform.rotation;
+        // g_transform.translation = centroid;
+        // g_transform.rotation = plugin_settings.alignment_rotation;
+        transform.translation = centroid;
+        transform.rotation = plugin_settings.alignment_rotation;
         visible.is_visible = n_selected > 0;
     } else {
         error!("Number of gizmos is != 1");
