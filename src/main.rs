@@ -1,11 +1,7 @@
-use bevy::{prelude::*, window::PresentMode::Mailbox};
+use bevy::{prelude::*};
 
 fn main() {
     App::new()
-        .insert_resource(WindowDescriptor {
-            present_mode: Mailbox,
-            ..Default::default()
-        })
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugins(bevy_mod_picking::DefaultPickingPlugins)
